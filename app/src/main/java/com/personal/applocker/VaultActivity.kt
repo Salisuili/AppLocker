@@ -38,46 +38,64 @@ class VaultActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.vault_layout)
+        try {
+            setContentView(R.layout.vault_layout)
 
-        recyclerView = findViewById(R.id.vault_recycler)
-        addButton = findViewById(R.id.add_photos_button)
-        restoreButton = findViewById(R.id.restore_button)
-        selectAppsButton = findViewById(R.id.select_apps_button)
+            recyclerView = findViewById(R.id.vault_recycler)
+            addButton = findViewById(R.id.add_photos_button)
+            restoreButton = findViewById(R.id.restore_button)
+            selectAppsButton = findViewById(R.id.select_apps_button)
 
-        recyclerView.layoutManager = GridLayoutManager(this, 3)
-        adapter = VaultAdapter(vaultFiles) { file ->
-            showPhotoOptions(file)
+            recyclerView.layoutManager = GridLayoutManager(this, 3)
+            adapter = VaultAdapter(vaultFiles) { file ->
+                showPhotoOptions(file)
+            }
+            recyclerView.adapter = adapter
+
+            addButton.setOnClickListener {
+                try {
+                    pickImageLauncher.launch("image/*")
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Cannot open gallery: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            restoreButton.setOnClickListener {
+                restoreAllPhotos()
+            }
+
+            selectAppsButton.setOnClickListener {
+                try {
+                    startActivity(Intent(this, AppSelectionActivity::class.java))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Cannot open app selection", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            loadVaultFiles()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
         }
-        recyclerView.adapter = adapter
-
-        addButton.setOnClickListener {
-            pickImageLauncher.launch("image/*")
-        }
-
-        restoreButton.setOnClickListener {
-            restoreAllPhotos()
-        }
-
-        selectAppsButton.setOnClickListener {
-            startActivity(Intent(this, AppSelectionActivity::class.java))
-        }
-
-        loadVaultFiles()
     }
 
     private fun loadVaultFiles() {
-        val vaultDir = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-            MainActivity.VAULT_DIR
-        )
-        if (!vaultDir.exists()) vaultDir.mkdirs()
+        try {
+            val vaultDir = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                MainActivity.VAULT_DIR
+            )
+            if (!vaultDir.exists()) vaultDir.mkdirs()
 
-        vaultFiles.clear()
-        vaultDir.listFiles()?.let { files ->
-            vaultFiles.addAll(files.filter { it.extension == "jpg" || it.extension == "png" })
+            vaultFiles.clear()
+            vaultDir.listFiles()?.let { files ->
+                vaultFiles.addAll(files.filter { 
+                    it.extension.lowercase() == "jpg" || it.extension.lowercase() == "png" 
+                })
+            }
+            adapter.notifyDataSetChanged()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot load photos: ${e.message}", Toast.LENGTH_SHORT).show()
         }
-        adapter.notifyDataSetChanged()
     }
 
     private fun addToVault(imageUri: Uri) {
@@ -99,36 +117,44 @@ class VaultActivity : AppCompatActivity() {
 
             Toast.makeText(this, "Photo added to vault!", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "Failed to add photo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Failed to add photo: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun showPhotoOptions(file: File) {
-        val options = arrayOf("View", "Restore to Gallery", "Delete")
-        AlertDialog.Builder(this)
-            .setTitle("Photo Options")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> viewPhoto(file)
-                    1 -> restorePhoto(file)
-                    2 -> deletePhoto(file)
+        try {
+            val options = arrayOf("View", "Restore to Gallery", "Delete")
+            AlertDialog.Builder(this)
+                .setTitle("Photo Options")
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> viewPhoto(file)
+                        1 -> restorePhoto(file)
+                        2 -> deletePhoto(file)
+                    }
                 }
-            }
-            .show()
+                .show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun viewPhoto(file: File) {
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(
-            androidx.core.content.FileProvider.getUriForFile(
-                this,
-                "${packageName}.fileprovider",
-                file
-            ),
-            "image/*"
-        )
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        startActivity(intent)
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.setDataAndType(
+                androidx.core.content.FileProvider.getUriForFile(
+                    this,
+                    "${packageName}.fileprovider",
+                    file
+                ),
+                "image/*"
+            )
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot view photo", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun restorePhoto(file: File) {
@@ -151,21 +177,31 @@ class VaultActivity : AppCompatActivity() {
                 Toast.makeText(this, "Photo restored to gallery!", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
-            Toast.makeText(this, "Restore failed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Restore failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun deletePhoto(file: File) {
-        file.delete()
-        loadVaultFiles()
-        Toast.makeText(this, "Photo deleted", Toast.LENGTH_SHORT).show()
+        try {
+            file.delete()
+            loadVaultFiles()
+            Toast.makeText(this, "Photo deleted", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot delete photo", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun restoreAllPhotos() {
-        vaultFiles.forEach { file ->
-            restorePhoto(file)
+        try {
+            var count = 0
+            vaultFiles.forEach { file ->
+                restorePhoto(file)
+                count++
+            }
+            Toast.makeText(this, "$count photos restored to gallery!", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Restore failed", Toast.LENGTH_SHORT).show()
         }
-        Toast.makeText(this, "All photos restored to gallery!", Toast.LENGTH_LONG).show()
     }
 }
 
@@ -185,13 +221,19 @@ class VaultAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val file = files[position]
-        holder.imageView.setImageURI(androidx.core.content.FileProvider.getUriForFile(
-            holder.itemView.context,
-            "${holder.itemView.context.packageName}.fileprovider",
-            file
-        ))
-        holder.itemView.setOnClickListener { onClick(file) }
+        try {
+            val file = files[position]
+            holder.imageView.setImageURI(
+                androidx.core.content.FileProvider.getUriForFile(
+                    holder.itemView.context,
+                    "${holder.itemView.context.packageName}.fileprovider",
+                    file
+                )
+            )
+            holder.itemView.setOnClickListener { onClick(file) }
+        } catch (e: Exception) {
+            // Skip images that can't be loaded
+        }
     }
 
     override fun getItemCount() = files.size
