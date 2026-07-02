@@ -192,11 +192,35 @@ class MainActivity : AppCompatActivity() {
 
     private fun evaluateExpression(expression: String): String {
         return try {
-            val result = javax.script.ScriptEngineManager().getEngineByName("rhino")
-                ?.eval(expression)?.toString() ?: "0"
-            result
+            // Simple calculator evaluation
+            val parts = expression.split(Regex("(?<=[+\\-×÷])|(?=[+\\-×÷])"))
+            var result = 0.0
+            var currentOp = "+"
+            
+            for (part in parts) {
+                when {
+                    part == "+" -> currentOp = "+"
+                    part == "−" -> currentOp = "-"
+                    part == "×" -> currentOp = "*"
+                    part == "÷" -> currentOp = "/"
+                    else -> {
+                        val num = part.toDoubleOrNull() ?: 0.0
+                        when (currentOp) {
+                            "+" -> result += num
+                            "-" -> result -= num
+                            "*" -> result *= num
+                            "/" -> result /= if (num != 0.0) num else 1.0
+                        }
+                    }
+                }
+            }
+            if (result == result.toLong().toDouble()) {
+                result.toLong().toString()
+            } else {
+                result.toString()
+            }
         } catch (e: Exception) {
-            "0"
+            "Error"
         }
     }
 
@@ -284,7 +308,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     cameraProvider.unbindAll()
                     val camera = cameraProvider.bindToLifecycle(
-                        this, cameraSelector, preview, imageCapture
+                        this as LifecycleOwner, cameraSelector, preview, imageCapture
                     )
 
                     val photoFile = File(

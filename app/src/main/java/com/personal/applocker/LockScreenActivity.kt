@@ -3,7 +3,6 @@ package com.personal.applocker
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
@@ -11,6 +10,7 @@ import android.widget.*
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import java.io.File
 
 class LockScreenActivity : Activity() {
@@ -62,8 +62,8 @@ class LockScreenActivity : Activity() {
 
                 try {
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        this, cameraSelector, imageCapture
+                    val camera = cameraProvider.bindToLifecycle(
+                        this as LifecycleOwner, cameraSelector, imageCapture
                     )
 
                     val photoFile = File(
@@ -106,7 +106,6 @@ class LockScreenActivity : Activity() {
     }
 
     override fun onBackPressed() {
-        // Block back button
         goToHome()
     }
 }
