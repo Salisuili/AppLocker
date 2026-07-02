@@ -29,6 +29,18 @@ jobs:
         cd gradle/wrapper
         curl -L -o gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar
     
+    - name: Create default app icon
+      run: |
+        mkdir -p app/src/main/res/mipmap-hdpi
+        mkdir -p app/src/main/res/mipmap-mdpi
+        mkdir -p app/src/main/res/mipmap-xhdpi
+        mkdir -p app/src/main/res/mipmap-xxhdpi
+        # Create a simple 1x1 pixel PNG as placeholder (valid PNG file)
+        printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82' > app/src/main/res/mipmap-hdpi/ic_launcher.png
+        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-mdpi/ic_launcher.png
+        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-xhdpi/ic_launcher.png
+        cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+    
     - name: Make gradlew executable
       run: chmod +x gradlew
     
