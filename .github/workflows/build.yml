@@ -23,6 +23,12 @@ jobs:
         api-level: 33
         build-tools: 33.0.0
     
+    - name: Download Gradle Wrapper JAR
+      run: |
+        mkdir -p gradle/wrapper
+        cd gradle/wrapper
+        curl -L -o gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar
+    
     - name: Make gradlew executable
       run: chmod +x gradlew
     
