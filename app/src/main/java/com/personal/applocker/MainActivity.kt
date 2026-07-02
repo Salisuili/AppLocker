@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
